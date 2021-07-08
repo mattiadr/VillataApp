@@ -6,20 +6,19 @@ import server.TableModel;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
+import java.util.Timer;
 
 public class ClientFrame {
 
+	public static final long REQUEST_INTERVAL = 5*60*1000;
+
 	// networking
-	public BufferedReader reader;
-	public PrintWriter writer;
+	public ObjectInputStream reader;
+	public ObjectOutputStream writer;
 
 	private JScrollPane queueScrollPane;
 	private JScrollPane inputScrollPane;
@@ -60,8 +59,8 @@ public class ClientFrame {
 		try {
 			// establish connection
 			Socket socket = new Socket(ip, 5000);
-			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			writer = new PrintWriter(socket.getOutputStream(), true);
+			writer = new ObjectOutputStream(socket.getOutputStream());
+			reader = new ObjectInputStream(socket.getInputStream());
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "Impossibile connettersi al server.", "Errore", JOptionPane.ERROR_MESSAGE);
 			System.exit(1);
@@ -111,7 +110,11 @@ public class ClientFrame {
 		frame.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-				writer.println("/end");
+				try {
+					writer.writeObject(Message.end());
+				} catch (IOException e) {
+					JOptionPane.showMessageDialog(null, "Errore durante la chiusura della connessione.", "Errore", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 		});
 		frame.setContentPane(panel);
@@ -120,8 +123,30 @@ public class ClientFrame {
 		frame.setVisible(true);
 	}
 
+	public void setQueueData(List<Reservation> data) {
+		queueData.clear();
+		queueData.addAll(data);
+		queueModel.refresh();
+	}
+
 	public static void main(String[] args) {
-		new ClientFrame();
+		ClientFrame frame = new ClientFrame();
+
+		// start requesting queue data periodically
+		new Timer().scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				try {
+					frame.writer.writeObject(Message.dataRequest());
+					Object response = frame.reader.readObject();
+					if (!(response instanceof Message)) throw new ClassNotFoundException("L'oggetto ricevuto non è un Message");
+					if (!((Message) response).isQueueData) throw new ClassNotFoundException("Il messaggio ricevuto non è un queueData");
+					frame.setQueueData(((Message) response).data);
+				} catch (IOException | ClassNotFoundException e) {
+					JOptionPane.showMessageDialog(null, "Errore di comunicazione con il server durante l'aggiornamento periodico.", "Errore", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}, 0, REQUEST_INTERVAL);
 	}
 
 }

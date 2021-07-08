@@ -1,10 +1,9 @@
 package server;
 
+import client.Message;
+
 import javax.swing.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -24,28 +23,34 @@ public class ServerMain {
 			while (true) {
 				Socket socket = serverSocket.accept();
 
-				BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+				ObjectInputStream reader = new ObjectInputStream(socket.getInputStream());
+				ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
 
-				String line;
+				while (true) {
+					Message m = (Message) reader.readObject();
 
-				while (!(line = reader.readLine()).equals("/end")) {
-					// res = [name, num, added_time, reserved_time, notes, replace]
-					String[] res = line.split(",");
-					long que;
-					if (mainFrame.isNameTaken(res[0], res[5].equals("true"))) {
-						que = -1;
-					} else {
-						que = mainFrame.addReservation(res[0], Integer.parseInt(res[1]), Long.parseLong(res[2]), Long.parseLong(res[3]), res[4], true);
+					if (m.isEnd)
+						break;
+					else if (m.isReservation) {
+						if (mainFrame.isNameTaken(m.name, m.replace)) {
+							writer.writeObject(Message.queueError());
+						} else {
+							// res = [name, num, added_time, reserved_time, notes, replace]
+							mainFrame.addReservation(m.name, m.num, m.addedTimestamp, m.reservedTimestamp, m.notes, true);
+							writer.writeObject(Message.queueData(mainFrame.getQueueData()));
+							writer.reset();
+						}
+					} else if (m.isDataRequest) {
+						writer.writeObject(Message.queueData(mainFrame.getQueueData()));
+						writer.reset();
 					}
-					writer.println(que);
 				}
 
 				reader.close();
 				writer.close();
 				socket.close();
 			}
-		} catch (IOException e) {
+		} catch (IOException | ClassNotFoundException e) {
 			JOptionPane.showMessageDialog(null, "Errore di lettura dal client.", "Errore", JOptionPane.ERROR_MESSAGE);
 		}
 

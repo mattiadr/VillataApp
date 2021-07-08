@@ -110,11 +110,12 @@ public class InputPanel {
 
 			if (mainFrame == null) {
 				// send to writer
-				clientFrame.writer.printf("%s,%d,%d,%d,%s,%s\n", name, num, addedTimestamp, reservedTimestamp, notes, replaceBox.isSelected());
-
 				try {
-					int ret = Integer.parseInt(clientFrame.reader.readLine());
-					if (ret == -1) {
+					// send new reservation to server
+					clientFrame.writer.writeObject(Message.reservation(name, num, addedTimestamp, reservedTimestamp, notes, replaceBox.isSelected()));
+					// read response
+					Object response = clientFrame.reader.readObject();
+					if (response instanceof Message && ((Message) response).isQueueError) {
 						if (!replaceBox.isSelected()) {
 							JOptionPane.showMessageDialog(null, "\"" + name + "\" è già stato utilizzato.", "Errore", JOptionPane.WARNING_MESSAGE);
 						} else {
@@ -122,11 +123,16 @@ public class InputPanel {
 						}
 						nameField.requestFocus();
 						return;
+					} else if (response instanceof Message && ((Message) response).isQueueData) {
+						clientFrame.setQueueData(((Message) response).data);
 					} else {
-						JOptionPane.showMessageDialog(null, "Sono presenti " + ret + " persone in coda.", "Info", JOptionPane.INFORMATION_MESSAGE);
+						throw new ClassNotFoundException("Received message is not a que response.");
 					}
 				} catch (IOException x) {
 					JOptionPane.showMessageDialog(null, "Errore di comunicazione con il server.", "Errore", JOptionPane.ERROR_MESSAGE);
+					return;
+				} catch (ClassNotFoundException | ClassCastException x) {
+					JOptionPane.showMessageDialog(null, "Ricevuti dati errati dal server.", "Errore", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
 			} else {
@@ -140,8 +146,7 @@ public class InputPanel {
 					nameField.requestFocus();
 					return;
 				} else {
-					long que = mainFrame.addReservation(name, num, addedTimestamp, reservedTimestamp, notes, true);
-					JOptionPane.showMessageDialog(null, "Sono presenti " + que + " persone in coda.", "Info", JOptionPane.INFORMATION_MESSAGE);
+					mainFrame.addReservation(name, num, addedTimestamp, reservedTimestamp, notes, true);
 					dialog.dispose();
 				}
 			}

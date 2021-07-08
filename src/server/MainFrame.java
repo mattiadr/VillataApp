@@ -24,8 +24,8 @@ public class MainFrame {
 	public final static Font mainFont = new Font("SansSerif", Font.PLAIN, 20);
 	public final static String BACKUP_LOCATION = FileSystemView.getFileSystemView().getDefaultDirectory().getPath() + "/VillataApp.bak";
 	public final static String LOG_LOCATION = FileSystemView.getFileSystemView().getDefaultDirectory().getPath() + "/VillataApp.log";
-	public final long UPDATE_INTERVAL = 5 * 60 * 1000; // 5 min
-	public final long TIME_DUE = 20 * 60 * 1000; // 20 min
+	public static final long UPDATE_INTERVAL = 5 * 60 * 1000; // 5 min
+	public static final long TIME_DUE = 20 * 60 * 1000; // 20 min
 
 	public final JFrame frame;
 	public PrintWriter logWriter = null;
@@ -342,7 +342,6 @@ public class MainFrame {
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				System.out.println("updating queue");
 				updateQueueData();
 			}
 		}, UPDATE_INTERVAL, UPDATE_INTERVAL);
@@ -382,17 +381,13 @@ public class MainFrame {
 		}
 	}
 
-	public long addReservation(String name, int num, long addedTimestamp, long reservedTimestamp, String notes, boolean backup) {
-		long ret = queueData.stream().filter((r) -> r.getNum() == num).count();
-
+	public void addReservation(String name, int num, long addedTimestamp, long reservedTimestamp, String notes, boolean backup) {
 		queueData.add(new Reservation(name, num, addedTimestamp, reservedTimestamp, notes, this));
 		queueData.sort(Comparator.comparingLong(Reservation::getAddedTimestamp).thenComparingLong(Reservation::getId));
 		updateQueueData();
 		if (backup) backupData();
 
 		updateTotalCounts();
-
-		return ret;
 	}
 
 	public void callReservation(long id) {
@@ -492,6 +487,10 @@ public class MainFrame {
 		logWriter.printf("%d,%s,%d,%d,%d,%d,%d,%d,%s,%s%n", r.getId(), r.getName(), r.getNum(), r.getAddedTimestamp(),
 				r.getReservedTimestamp(), r.getCalledTimestamp(), r.getConfirmedTimestamp(), r.getCompletedTimestamp(), r.getNotes(), status);
 		logWriter.flush();
+	}
+	
+	public List<Reservation> getQueueData() {
+		return queueData;
 	}
 
 }
