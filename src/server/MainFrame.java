@@ -1,6 +1,6 @@
 package server;
 
-import client.ClientFrame;
+import client.InputPanel;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
@@ -152,7 +152,7 @@ public class MainFrame {
 		queueTable.setRowSelectionAllowed(true);
 		// set font
 		queueTable.setFont(mainFont);
-		// center 2nd col
+		// center cols
 		DefaultTableCellRenderer centerCellRenderer = new DefaultTableCellRenderer();
 		centerCellRenderer.setHorizontalAlignment(JLabel.CENTER);
 		queueTable.getColumnModel().getColumn(1).setCellRenderer(centerCellRenderer);
@@ -299,7 +299,7 @@ public class MainFrame {
 		// add top buttons
 		MainFrame mf = this;
 		addButton.setFocusable(false);
-		addButton.addActionListener(e -> new ClientFrame(mf));
+		addButton.addActionListener(e -> new InputPanel(mf, null));
 
 		queueFilterCheckBox.setFocusable(false);
 		queueFilterCheckBox.addActionListener(e -> updateQueueData());
