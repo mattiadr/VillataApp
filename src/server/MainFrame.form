@@ -10,7 +10,7 @@
       <component id="f1fbf" class="javax.swing.JLabel">
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
+          <gridbag weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
           <font name="SansSerif" size="20" style="1"/>
@@ -19,7 +19,7 @@
       </component>
       <component id="2c311" class="javax.swing.JLabel">
         <constraints>
-          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -29,7 +29,7 @@
       </component>
       <scrollpane id="f47f2" binding="queueScrollPane">
         <constraints>
-          <grid row="1" column="0" row-span="3" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="0" row-span="3" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="1.0"/>
         </constraints>
         <properties/>
@@ -38,7 +38,7 @@
       </scrollpane>
       <scrollpane id="be79e" binding="screenScrollPane">
         <constraints>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.5" weighty="0.5"/>
         </constraints>
         <properties/>
@@ -47,7 +47,7 @@
       </scrollpane>
       <component id="d3f23" class="javax.swing.JLabel">
         <constraints>
-          <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -57,7 +57,7 @@
       </component>
       <scrollpane id="b5d00" binding="waitingScrollPane">
         <constraints>
-          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="3" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.5" weighty="1.0"/>
         </constraints>
         <properties/>
@@ -66,7 +66,7 @@
       </scrollpane>
       <component id="62a0d" class="javax.swing.JLabel" binding="countsLabel">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag top="0" left="5" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -75,7 +75,7 @@
       </component>
       <component id="f8557" class="javax.swing.JLabel" binding="ipLabel">
         <constraints>
-          <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag top="0" left="0" bottom="0" right="5" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -90,6 +90,16 @@
         </constraints>
         <properties>
           <text value="+"/>
+        </properties>
+      </component>
+      <component id="b4ac2" class="javax.swing.JCheckBox" binding="queueFilterCheckBox">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <selected value="true"/>
+          <text value="Mostra Tutte"/>
         </properties>
       </component>
     </children>

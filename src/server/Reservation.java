@@ -12,28 +12,46 @@ public class Reservation implements Serializable {
 	private final long id;
 	private final String name;
 	private final int num;
-	private final long timestamp;
+	private final long addedTimestamp;
+	private final long reservedTimestamp;
 	private final String notes;
 	private final JButton call;
 	private final JButton confirm;
 	private final JButton complete;
 	private final JButton remove;
 
-	public Reservation(String name, int num, long timestamp, String notes, MainFrame frame) {
+	private long calledTimestamp;
+	private long confirmedTimestamp;
+	private long completedTimestamp;
+
+	public Reservation(String name, int num, long addedTimestamp, long reservedTimestamp, String notes, MainFrame frame) {
 		this.id = ID++;
 		this.name = name;
 		this.num = num;
-		this.timestamp = timestamp;
+		this.addedTimestamp = addedTimestamp;
+		this.reservedTimestamp = reservedTimestamp;
 		this.notes = notes;
 
 		call = new JButton("Chiama");
-		call.addActionListener(e -> frame.callReservation(id));
+		call.addActionListener(e -> {
+			this.setCalledTimestamp();
+			frame.callReservation(id);
+		});
 		confirm = new JButton("Conferma");
-		confirm.addActionListener(e -> frame.confirmReservation(id));
+		confirm.addActionListener(e -> {
+			this.setConfirmedTimestamp();
+			frame.confirmReservation(id);
+		});
 		complete = new JButton("Completa");
-		complete.addActionListener(e -> frame.completeReservation(id));
+		complete.addActionListener(e -> {
+			this.setCompletedTimestamp();
+			frame.completeReservation(id);
+		});
 		remove = new JButton("Rimuovi");
-		remove.addActionListener(e -> frame.removeReservation(id, true));
+		remove.addActionListener(e -> {
+			this.setCompletedTimestamp();
+			frame.removeReservation(id, true);
+		});
 	}
 
 	public long getId() {
@@ -48,12 +66,23 @@ public class Reservation implements Serializable {
 		return num;
 	}
 
-	public long getTimestamp() {
-		return timestamp;
+	public long getAddedTimestamp() {
+		return addedTimestamp;
 	}
 
-	public String getTime() {
-		Date date = new Date(timestamp);
+	public String getAddedTime() {
+		Date date = new Date(addedTimestamp);
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+		return sdf.format(date);
+	}
+
+	public long getReservedTimestamp() {
+		return reservedTimestamp;
+	}
+
+	public String getReservedTime() {
+		if (reservedTimestamp == 0) return "ASAP";
+		Date date = new Date(reservedTimestamp);
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
 		return sdf.format(date);
 	}
@@ -77,4 +106,29 @@ public class Reservation implements Serializable {
 	public JButton getRemove() {
 		return remove;
 	}
+
+	public long getCalledTimestamp() {
+		return calledTimestamp;
+	}
+
+	public void setCalledTimestamp() {
+		this.calledTimestamp = new Date().getTime();
+	}
+
+	public long getConfirmedTimestamp() {
+		return confirmedTimestamp;
+	}
+
+	public void setConfirmedTimestamp() {
+		this.confirmedTimestamp = new Date().getTime();
+	}
+
+	public long getCompletedTimestamp() {
+		return completedTimestamp;
+	}
+
+	public void setCompletedTimestamp() {
+		this.completedTimestamp = new Date().getTime();
+	}
+
 }

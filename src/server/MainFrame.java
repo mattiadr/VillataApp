@@ -15,13 +15,17 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Timer;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MainFrame {
 
 	public final static Font mainFont = new Font("SansSerif", Font.PLAIN, 20);
 	public final static String BACKUP_LOCATION = FileSystemView.getFileSystemView().getDefaultDirectory().getPath() + "/VillataApp.bak";
 	public final static String LOG_LOCATION = FileSystemView.getFileSystemView().getDefaultDirectory().getPath() + "/VillataApp.log";
+	public final long UPDATE_INTERVAL = 5 * 60 * 1000; // 5 min
+	public final long TIME_DUE = 20 * 60 * 1000; // 20 min
 
 	public final JFrame frame;
 	public PrintWriter logWriter = null;
@@ -31,8 +35,9 @@ public class MainFrame {
 
 	// queue table data and objects
 	private final List<Reservation> queueData = Collections.synchronizedList(new ArrayList<>());
-	private final TableModel queueModel = new TableModel(new String[]{"Nome", "Posti", "Ora", "Note", "Chiama", "Rimuovi", "ID"},
-			new Class<?>[]{String.class, Integer.class, String.class, String.class, JButton.class, JButton.class, Long.class}, queueData) {
+	private final List<Reservation> queueDataApparent = Collections.synchronizedList(new ArrayList<>());
+	private final TableModel queueModel = new TableModel(new String[]{"Nome", "Posti", "Ora Ins.", "Ora Pren.", "Note", "Chiama", "Rimuovi", "ID"},
+			new Class<?>[]{String.class, Integer.class, String.class, String.class, String.class, JButton.class, JButton.class, Long.class}, queueDataApparent) {
 		@Override
 		public Object getValueAt(int rowIndex, int columnIndex) {
 			switch (columnIndex) {
@@ -41,14 +46,16 @@ public class MainFrame {
 				case 1:
 					return getData().get(rowIndex).getNum();
 				case 2:
-					return getData().get(rowIndex).getTime();
+					return getData().get(rowIndex).getAddedTime();
 				case 3:
-					return getData().get(rowIndex).getNotes();
+					return getData().get(rowIndex).getReservedTime();
 				case 4:
-					return getData().get(rowIndex).getCall();
+					return getData().get(rowIndex).getNotes();
 				case 5:
-					return getData().get(rowIndex).getRemove();
+					return getData().get(rowIndex).getCall();
 				case 6:
+					return getData().get(rowIndex).getRemove();
+				case 7:
 					return getData().get(rowIndex).getId();
 				default:
 					return null;
@@ -116,8 +123,9 @@ public class MainFrame {
 	// waiting list scroll pane
 	private JScrollPane waitingScrollPane;
 
-	// buttons
+	// top buttons
 	private JButton addButton;
+	private JCheckBox queueFilterCheckBox;
 
 	// bottom labels
 	private JLabel countsLabel;
@@ -129,7 +137,7 @@ public class MainFrame {
 		try {
 			logWriter = new PrintWriter(new BufferedWriter(new FileWriter(LOG_LOCATION, true)));
 			logWriter.println("LOG START " + java.time.LocalDateTime.now());
-			logWriter.println("ID, NAME, NUMBER, TIMESTAMP, TIME, NOTES, STATUS");
+			logWriter.println("ID,NAME,NUMBER,ADDED_TIMESTAMP,RESERVED_TIMESTAMP,CALLED_TIMESTAMP,CONFIRMED_TIMESTAMP,COMPLETED_TIMESTAMP,NOTES,STATUS");
 			logWriter.flush();
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "Impossibile aprire il file di LOG.", "Errore", JOptionPane.ERROR_MESSAGE);
@@ -149,21 +157,24 @@ public class MainFrame {
 		centerCellRenderer.setHorizontalAlignment(JLabel.CENTER);
 		queueTable.getColumnModel().getColumn(1).setCellRenderer(centerCellRenderer);
 		queueTable.getColumnModel().getColumn(2).setCellRenderer(centerCellRenderer);
+		queueTable.getColumnModel().getColumn(3).setCellRenderer(centerCellRenderer);
 		// increase row height
 		queueTable.setRowHeight(queueTable.getRowHeight() + 6);
 		// set col width
 		queueTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
 		queueTable.getColumnModel().getColumn(0).setPreferredWidth(200);
-		queueTable.getColumnModel().getColumn(1).setPreferredWidth(40);
-		queueTable.getColumnModel().getColumn(2).setPreferredWidth(80);
-		queueTable.getColumnModel().getColumn(3).setPreferredWidth(200);
-		queueTable.getColumnModel().getColumn(4).setPreferredWidth(80);
+		queueTable.getColumnModel().getColumn(1).setPreferredWidth(25);
+		queueTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+		queueTable.getColumnModel().getColumn(3).setPreferredWidth(50);
+		queueTable.getColumnModel().getColumn(4).setPreferredWidth(200);
 		queueTable.getColumnModel().getColumn(5).setPreferredWidth(80);
+		queueTable.getColumnModel().getColumn(6).setPreferredWidth(80);
 		queueTable.getColumnModel().getColumn(1).setResizable(false);
 		queueTable.getColumnModel().getColumn(2).setResizable(false);
 		queueTable.getColumnModel().getColumn(3).setResizable(false);
 		queueTable.getColumnModel().getColumn(4).setResizable(false);
 		queueTable.getColumnModel().getColumn(5).setResizable(false);
+		queueTable.getColumnModel().getColumn(6).setResizable(false);
 		// set button render
 		TableCellRenderer buttonRenderer = (table, value, isSelected, hasFocus, row, column) -> (JButton) value;
 		queueTable.getColumn("Chiama").setCellRenderer(buttonRenderer);
@@ -285,10 +296,13 @@ public class MainFrame {
 		waitingScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		waitingScrollPane.setPreferredSize(new Dimension(waitingTable.getPreferredSize().width, waitingScrollPane.getPreferredSize().height));
 
-		// add button
+		// add top buttons
 		MainFrame mf = this;
 		addButton.setFocusable(false);
 		addButton.addActionListener(e -> new ClientFrame(mf));
+
+		queueFilterCheckBox.setFocusable(false);
+		queueFilterCheckBox.addActionListener(e -> updateQueueData());
 
 		// set ip to label
 		try (final DatagramSocket socket = new DatagramSocket()) {
@@ -323,6 +337,28 @@ public class MainFrame {
 
 		// update counts
 		updateTotalCounts();
+
+		// start refreshing list periodically
+		new Timer().scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {
+				System.out.println("updating queue");
+				updateQueueData();
+			}
+		}, UPDATE_INTERVAL, UPDATE_INTERVAL);
+	}
+
+	private void updateQueueData() {
+		queueDataApparent.clear();
+		if (queueFilterCheckBox.isSelected()) {
+			queueDataApparent.addAll(queueData);
+		} else {
+			queueDataApparent.addAll(queueData.stream().filter(r -> {
+				long now = new Date().getTime();
+				return r.getReservedTimestamp() == 0 || r.getReservedTimestamp() - now <= TIME_DUE;
+			}).collect(Collectors.toList()));
+		}
+		queueModel.refresh();
 	}
 
 	private void updateTotalCounts() {
@@ -346,12 +382,12 @@ public class MainFrame {
 		}
 	}
 
-	public long addReservation(String name, int num, long timestamp, String notes, boolean backup) {
+	public long addReservation(String name, int num, long addedTimestamp, long reservedTimestamp, String notes, boolean backup) {
 		long ret = queueData.stream().filter((r) -> r.getNum() == num).count();
 
-		queueData.add(new Reservation(name, num, timestamp, notes, this));
-		queueData.sort(Comparator.comparingLong(Reservation::getTimestamp).thenComparingLong(Reservation::getId));
-		queueModel.refresh();
+		queueData.add(new Reservation(name, num, addedTimestamp, reservedTimestamp, notes, this));
+		queueData.sort(Comparator.comparingLong(Reservation::getAddedTimestamp).thenComparingLong(Reservation::getId));
+		updateQueueData();
 		if (backup) backupData();
 
 		updateTotalCounts();
@@ -390,7 +426,7 @@ public class MainFrame {
 				if (log)
 					logReservation(r, "REMOVED_ON_QUEUE");
 				queueData.remove(r);
-				queueModel.refresh();
+				updateQueueData();
 				res = r;
 				break;
 			}
@@ -435,7 +471,7 @@ public class MainFrame {
 			@SuppressWarnings("unchecked")
 			List<Reservation> tmp = (List<Reservation>) ois.readObject();
 			for (Reservation r : tmp) {
-				addReservation(r.getName(), r.getNum(), r.getTimestamp(), r.getNotes(), false);
+				addReservation(r.getName(), r.getNum(), r.getAddedTimestamp(), r.getReservedTimestamp(), r.getNotes(), false);
 			}
 			backupData();
 			ois.close();
@@ -452,8 +488,9 @@ public class MainFrame {
 
 	public void logReservation(Reservation r, String status) {
 		if (logWriter == null) return;
-		// ID, NAME, NUMBER, TIMESTAMP, TIME, NOTES, STATUS
-		logWriter.printf("%d, %s, %d, %d, %s, %s, %s%n", r.getId(), r.getName(), r.getNum(), r.getTimestamp(), r.getTime(), r.getNotes(), status);
+		// ID, NAME, NUMBER, ADDED_TIMESTAMP, RESERVED_TIMESTAMP, CALLED_TIMESTAMP, CONFIRMED_TIMESTAMP, COMPLETED_TIMESTAMP, NOTES, STATUS
+		logWriter.printf("%d,%s,%d,%d,%d,%d,%d,%d,%s,%s%n", r.getId(), r.getName(), r.getNum(), r.getAddedTimestamp(),
+				r.getReservedTimestamp(), r.getCalledTimestamp(), r.getConfirmedTimestamp(), r.getCompletedTimestamp(), r.getNotes(), status);
 		logWriter.flush();
 	}
 

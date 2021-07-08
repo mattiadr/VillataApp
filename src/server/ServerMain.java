@@ -30,13 +30,13 @@ public class ServerMain {
 				String line;
 
 				while (!(line = reader.readLine()).equals("/end")) {
-					// res = [name, num, time, notes, replace]
+					// res = [name, num, added_time, reserved_time, notes, replace]
 					String[] res = line.split(",");
 					long que;
 					if (mainFrame.isNameTaken(res[0], res[4].equals("true"))) {
 						que = -1;
 					} else {
-						que = mainFrame.addReservation(res[0], Integer.parseInt(res[1]), Long.parseLong(res[2]), res[3], true);
+						que = mainFrame.addReservation(res[0], Integer.parseInt(res[1]), Long.parseLong(res[2]), Long.parseLong(res[3]), res[4], true);
 					}
 					writer.println(que);
 				}

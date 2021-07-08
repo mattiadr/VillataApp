@@ -107,9 +107,10 @@ public class ClientFrame {
 			}
 
 			String time = timeField.getText();
-			long timestamp;
+			long addedTimestamp = new Date().getTime();
+			long reservedTimestamp;
 			if (time.isEmpty()) {
-				timestamp = new Date().getTime();
+				reservedTimestamp = 0;
 			} else {
 				Matcher m = timeRegex.matcher(time);
 				if (!m.find() || m.group(1) == null) {
@@ -131,14 +132,14 @@ public class ClientFrame {
 				c.set(Calendar.MINUTE, mm);
 				c.set(Calendar.SECOND, 0);
 				c.set(Calendar.MILLISECOND, 0);
-				timestamp = c.getTimeInMillis();
+				reservedTimestamp = c.getTimeInMillis();
 			}
 
 			String notes = notesField.getText().replaceAll(",", " ");
 
 			if (mainFrame == null) {
 				// send to writer
-				writer.printf("%s,%d,%d,%s,%s\n", name, num, timestamp, notes, replaceBox.isSelected());
+				writer.printf("%s,%d,%d,%d,%s,%s\n", name, num, addedTimestamp, reservedTimestamp, notes, replaceBox.isSelected());
 
 				try {
 					int ret = Integer.parseInt(reader.readLine());
@@ -168,7 +169,7 @@ public class ClientFrame {
 					nameField.requestFocus();
 					return;
 				} else {
-					long que = mainFrame.addReservation(name, num, timestamp, notes, true);
+					long que = mainFrame.addReservation(name, num, addedTimestamp, reservedTimestamp, notes, true);
 					JOptionPane.showMessageDialog(frame, "Sono presenti " + que + " persone in coda.", "Info", JOptionPane.INFORMATION_MESSAGE);
 					dialog.dispose();
 				}
