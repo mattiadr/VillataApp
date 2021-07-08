@@ -33,7 +33,7 @@ public class ServerMain {
 					// res = [name, num, added_time, reserved_time, notes, replace]
 					String[] res = line.split(",");
 					long que;
-					if (mainFrame.isNameTaken(res[0], res[4].equals("true"))) {
+					if (mainFrame.isNameTaken(res[0], res[5].equals("true"))) {
 						que = -1;
 					} else {
 						que = mainFrame.addReservation(res[0], Integer.parseInt(res[1]), Long.parseLong(res[2]), Long.parseLong(res[3]), res[4], true);
