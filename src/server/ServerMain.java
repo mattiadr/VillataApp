@@ -11,6 +11,8 @@ import java.net.Socket;
 
 public class ServerMain {
 
+	public static final int SERVER_SOCKET_PORT = 5000;
+
 	public static void main(String[] args) {
 
 		MainFrame mainFrame = new MainFrame();
@@ -20,42 +22,57 @@ public class ServerMain {
 
 		// start reading socket for requests from client
 		try {
-			ServerSocket serverSocket = new ServerSocket(5000);
+			ServerSocket serverSocket = new ServerSocket(SERVER_SOCKET_PORT);
 
 			while (true) {
+				// accept connection
 				Socket socket = serverSocket.accept();
-
 				ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream reader = new ObjectInputStream(socket.getInputStream());
 
-				while (true) {
-					Message m = (Message) reader.readObject();
+				// start thread to handle connection
+				new Thread(() -> handleClient(mainFrame, socket, reader, writer)).start();
+			}
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(null, "Un client ha provato a collegarsi, ma ha fallito.", "Errore", JOptionPane.ERROR_MESSAGE);
+		}
 
-					if (m.isEnd)
-						break;
-					else if (m.isReservation) {
-						if (mainFrame.isNameTaken(m.name, m.replace)) {
-							writer.writeObject(Message.queueError());
-						} else {
-							// res = [name, num, added_time, reserved_time, notes, replace]
-							mainFrame.addReservation(m.name, m.num, m.addedTimestamp, m.reservedTimestamp, m.notes, true);
-							writer.writeObject(Message.queueData(mainFrame.getQueueData()));
-							writer.reset();
-						}
-					} else if (m.isDataRequest) {
+	}
+
+	public static void handleClient(MainFrame mainFrame, Socket socket, ObjectInputStream reader, ObjectOutputStream writer) {
+		while (true) {
+			try {
+				Message m = (Message) reader.readObject();
+
+				if (m.isEnd) {
+					JOptionPane.showMessageDialog(null, "Uno dei client si è disconnesso.", "Info", JOptionPane.INFORMATION_MESSAGE);
+					break;
+				} else if (m.isReservation) {
+					if (mainFrame.isNameTaken(m.name, m.replace)) {
+						writer.writeObject(Message.queueError());
+					} else {
+						// res = [name,3Il num, added_time, reserved_time, notes, replace]
+						mainFrame.addReservation(m.name, m.num, m.addedTimestamp, m.reservedTimestamp, m.notes, true);
 						writer.writeObject(Message.queueData(mainFrame.getQueueData()));
 						writer.reset();
 					}
+				} else if (m.isDataRequest) {
+					writer.writeObject(Message.queueData(mainFrame.getQueueData()));
+					writer.reset();
 				}
-
-				reader.close();
-				writer.close();
-				socket.close();
+			} catch (IOException | ClassNotFoundException e) {
+				JOptionPane.showMessageDialog(null, "Errore durante la comunicazione con uno dei client. La connessione è stata interrotta.", "Errore", JOptionPane.ERROR_MESSAGE);
+				break;
 			}
-		} catch (IOException | ClassNotFoundException e) {
-			JOptionPane.showMessageDialog(null, "Errore di lettura dal client.", "Errore", JOptionPane.ERROR_MESSAGE);
 		}
 
+		try {
+			reader.close();
+			writer.close();
+			socket.close();
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(null, "Errore durante la chiusura della connessione con uno dei client.", "Errore", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 }

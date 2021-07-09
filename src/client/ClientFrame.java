@@ -1,6 +1,7 @@
 package client;
 
 import server.Reservation;
+import server.ServerMain;
 import server.TableModel;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public class ClientFrame {
 
 		try {
 			// establish connection
-			Socket socket = new Socket(ip, 5000);
+			Socket socket = new Socket(ip, ServerMain.SERVER_SOCKET_PORT);
 			writer = new ObjectOutputStream(socket.getOutputStream());
 			reader = new ObjectInputStream(socket.getInputStream());
 		} catch (IOException e) {
