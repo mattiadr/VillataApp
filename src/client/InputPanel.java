@@ -56,7 +56,7 @@ public class InputPanel {
 		// sendButton settings
 		sendButton.setFocusable(false);
 		sendButton.addActionListener(e -> {
-			String name = nameField.getText().replaceAll(",", "");
+			String name = nameField.getText().replaceAll(",", "").trim();
 			if (name.isEmpty()) {
 				JOptionPane.showMessageDialog(null, "Il nome non può essere vuoto.", "Errore", JOptionPane.ERROR_MESSAGE);
 				nameField.requestFocus();
@@ -65,7 +65,7 @@ public class InputPanel {
 
 			int num;
 			try {
-				num = Integer.parseInt(numField.getText());
+				num = Integer.parseInt(numField.getText().trim());
 			} catch (NumberFormatException x) {
 				JOptionPane.showMessageDialog(null, "Il numero di posti deve essere un intero.", "Errore", JOptionPane.ERROR_MESSAGE);
 				numField.requestFocus();
@@ -77,7 +77,7 @@ public class InputPanel {
 				return;
 			}
 
-			String time = timeField.getText();
+			String time = timeField.getText().trim();
 			long addedTimestamp = new Date().getTime();
 			long reservedTimestamp;
 			if (time.isEmpty()) {
@@ -106,7 +106,7 @@ public class InputPanel {
 				reservedTimestamp = c.getTimeInMillis();
 			}
 
-			String notes = notesField.getText().replaceAll(",", " ");
+			String notes = notesField.getText().replaceAll(",", " ").trim();
 
 			if (mainFrame == null) {
 				// send to writer
