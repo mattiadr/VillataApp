@@ -488,7 +488,7 @@ public class MainFrame {
 				r.getReservedTimestamp(), r.getCalledTimestamp(), r.getConfirmedTimestamp(), r.getCompletedTimestamp(), r.getNotes(), status);
 		logWriter.flush();
 	}
-	
+
 	public List<Reservation> getQueueData() {
 		return queueData;
 	}

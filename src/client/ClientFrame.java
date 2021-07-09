@@ -6,15 +6,18 @@ import server.TableModel;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ClientFrame {
 
-	public static final long REQUEST_INTERVAL = 5*60*1000;
+	public static final long REQUEST_INTERVAL = 5 * 60 * 1000;
 
 	// networking
 	public ObjectInputStream reader;
@@ -129,6 +132,8 @@ public class ClientFrame {
 		queueModel.refresh();
 	}
 
+	public static ReentrantLock mutex = new ReentrantLock();
+
 	public static void main(String[] args) {
 		ClientFrame frame = new ClientFrame();
 
@@ -137,13 +142,18 @@ public class ClientFrame {
 			@Override
 			public void run() {
 				try {
+					mutex.lock();
 					frame.writer.writeObject(Message.dataRequest());
 					Object response = frame.reader.readObject();
-					if (!(response instanceof Message)) throw new ClassNotFoundException("L'oggetto ricevuto non è un Message");
-					if (!((Message) response).isQueueData) throw new ClassNotFoundException("Il messaggio ricevuto non è un queueData");
+					if (!(response instanceof Message))
+						throw new ClassNotFoundException("L'oggetto ricevuto non è un Message");
+					if (!((Message) response).isQueueData)
+						throw new ClassNotFoundException("Il messaggio ricevuto non è un queueData");
 					frame.setQueueData(((Message) response).data);
 				} catch (IOException | ClassNotFoundException e) {
 					JOptionPane.showMessageDialog(null, "Errore di comunicazione con il server durante l'aggiornamento periodico.", "Errore", JOptionPane.ERROR_MESSAGE);
+				} finally {
+					mutex.unlock();
 				}
 			}
 		}, 0, REQUEST_INTERVAL);

@@ -3,7 +3,9 @@ package server;
 import client.Message;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -23,8 +25,8 @@ public class ServerMain {
 			while (true) {
 				Socket socket = serverSocket.accept();
 
-				ObjectInputStream reader = new ObjectInputStream(socket.getInputStream());
 				ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
+				ObjectInputStream reader = new ObjectInputStream(socket.getInputStream());
 
 				while (true) {
 					Message m = (Message) reader.readObject();

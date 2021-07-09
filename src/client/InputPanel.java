@@ -112,6 +112,7 @@ public class InputPanel {
 				// send to writer
 				try {
 					// send new reservation to server
+					ClientFrame.mutex.lock();
 					clientFrame.writer.writeObject(Message.reservation(name, num, addedTimestamp, reservedTimestamp, notes, replaceBox.isSelected()));
 					// read response
 					Object response = clientFrame.reader.readObject();
@@ -134,6 +135,8 @@ public class InputPanel {
 				} catch (ClassNotFoundException | ClassCastException x) {
 					JOptionPane.showMessageDialog(null, "Ricevuti dati errati dal server.", "Errore", JOptionPane.ERROR_MESSAGE);
 					return;
+				} finally {
+					ClientFrame.mutex.unlock();
 				}
 			} else {
 				// send to mainFrame
