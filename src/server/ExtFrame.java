@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ExtFrame implements Runnable {
 
@@ -80,9 +82,6 @@ public class ExtFrame implements Runnable {
 	@Override
 	public void run() {
 
-		int changeImage = 0;
-		int imageIndex = 0;
-
 		ArrayList<BufferedImage> images = new ArrayList<>();
 
 		File dir = new File(IMAGES_LOCATION);
@@ -98,25 +97,27 @@ public class ExtFrame implements Runnable {
 			}
 		}
 
-		while (true) {
-			// refresh table
-			tableModel.refresh();
+		// start refreshing screen periodically
+		new Timer().scheduleAtFixedRate(new TimerTask() {
 
-			// change image if needed
-			if (changeImage <= 0 && images.size() > 0) {
-				currentImage = images.get(imageIndex++);
-				imgPanel.repaint();
-				imageIndex %= images.size();
-				changeImage = IMAGE_TIMER;
+			int changeImage = 0;
+			int imageIndex = 0;
+
+			@Override
+			public void run() {
+				// refresh table
+				tableModel.refresh();
+
+				// change image if needed
+				if (changeImage <= 0 && images.size() > 0) {
+					currentImage = images.get(imageIndex++);
+					imgPanel.repaint();
+					imageIndex %= images.size();
+					changeImage = IMAGE_TIMER;
+				}
+				changeImage--;
 			}
-			changeImage--;
-			// sleep 1s
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+		}, 1000, 1000);
 	}
 
 	private void createUIComponents() {
