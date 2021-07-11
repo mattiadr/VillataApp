@@ -1,6 +1,7 @@
 package client;
 
 import server.MainFrame;
+import server.Reservation;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -22,17 +23,14 @@ public class InputPanel {
 	private JTextField numField;
 	private JTextField timeField;
 	private JTextField notesField;
-	private JCheckBox replaceBox;
 	private JButton sendButton;
-	private JButton button2;
+	private JButton cancelButton;
 
-	// last modified vars
-	private String lastName = null;
-	private String lastNum = null;
-	private String lastTime = null;
-	private String lastNotes = null;
+	private boolean isEditMode = false;
+	private long editingId = -1;
 
-	public InputPanel(MainFrame mainFrame, ClientFrame clientFrame) {
+	// editing reservation must be set only if we called this from MainFrame and not when called from ClientFrame
+	public InputPanel(MainFrame mainFrame, Reservation editingReservation, ClientFrame clientFrame) {
 		// time regex
 		Pattern timeRegex = Pattern.compile("\\D*(\\d+)\\D*(\\d+)?\\D*");
 
@@ -49,9 +47,6 @@ public class InputPanel {
 		numField.addKeyListener(keyListener);
 		timeField.addKeyListener(keyListener);
 		notesField.addKeyListener(keyListener);
-
-		// checkbox settings
-		replaceBox.setFocusable(false);
 
 		// sendButton settings
 		sendButton.setFocusable(false);
@@ -111,23 +106,35 @@ public class InputPanel {
 			if (mainFrame == null) {
 				// send to writer
 				try {
-					// send new reservation to server
+					// send reservation to server
 					ClientFrame.mutex.lock();
-					clientFrame.writer.writeObject(Message.reservation(name, num, addedTimestamp, reservedTimestamp, notes, replaceBox.isSelected()));
+					if (!isEditMode) {
+						// send new reservation
+						clientFrame.writer.writeObject(Message.addReservation(name, num, addedTimestamp, reservedTimestamp, notes));
+					} else {
+						// send edit reservation
+						clientFrame.writer.writeObject(Message.editReservation(editingId, name, num, reservedTimestamp, notes));
+					}
 					// read response
 					Object response = clientFrame.reader.readObject();
 					if (response instanceof Message && ((Message) response).isQueueError) {
-						if (!replaceBox.isSelected()) {
+						Message err = (Message) response;
+						if (err.errorType == Message.QueueError.ERROR_NAME) {
 							JOptionPane.showMessageDialog(null, "\"" + name + "\" è già stato utilizzato.", "Errore", JOptionPane.WARNING_MESSAGE);
+							nameField.requestFocus();
+						} else if (err.errorType == Message.QueueError.ERROR_ID) {
+							JOptionPane.showMessageDialog(null, "\"" + name + "\" (ID: " + editingId + ") non può essere sostituito perché non esiste.", "Errore", JOptionPane.WARNING_MESSAGE);
+							exitEditMode();
 						} else {
-							JOptionPane.showMessageDialog(null, "\"" + name + "\" non può essere sostituito perché non esiste.", "Errore", JOptionPane.WARNING_MESSAGE);
+							JOptionPane.showMessageDialog(null, "Ricevuto errore con codice sconosciuto.", "Errore", JOptionPane.ERROR_MESSAGE);
 						}
-						nameField.requestFocus();
 						return;
 					} else if (response instanceof Message && ((Message) response).isQueueData) {
 						clientFrame.setQueueData(((Message) response).data);
+						if (isEditMode)
+							exitEditMode();
 					} else {
-						throw new ClassNotFoundException("Received message is not a que response.");
+						throw new ClassNotFoundException("Received message is not a queue response.");
 					}
 				} catch (IOException x) {
 					JOptionPane.showMessageDialog(null, "Errore di comunicazione con il server.", "Errore", JOptionPane.ERROR_MESSAGE);
@@ -140,53 +147,52 @@ public class InputPanel {
 				}
 			} else {
 				// send to mainFrame
-				if (mainFrame.isNameTaken(name, replaceBox.isSelected())) {
-					if (!replaceBox.isSelected()) {
+				if (!isEditMode) {
+					// adding new reservation
+					if (mainFrame.isNameTaken(name, -1)) {
 						JOptionPane.showMessageDialog(null, "\"" + name + "\" è già stato utilizzato.", "Errore", JOptionPane.WARNING_MESSAGE);
+						nameField.requestFocus();
+						return;
 					} else {
-						JOptionPane.showMessageDialog(null, "\"" + name + "\" non può essere sostituito perché non esiste.", "Errore", JOptionPane.WARNING_MESSAGE);
+						mainFrame.addReservation(name, num, addedTimestamp, reservedTimestamp, notes, true);
 					}
-					nameField.requestFocus();
-					return;
 				} else {
-					mainFrame.addReservation(name, num, addedTimestamp, reservedTimestamp, notes, true);
-					dialog.dispose();
+					// editing existing reservation
+					if (mainFrame.isIdFree(editingId)) {
+						JOptionPane.showMessageDialog(null, "\"" + name + "\" (ID: " + editingId + ") non può essere sostituito perché non esiste.", "Errore", JOptionPane.WARNING_MESSAGE);
+					} else if (mainFrame.isNameTaken(name, editingId)) {
+						JOptionPane.showMessageDialog(null, "\"" + name + "\" è già stato utilizzato.", "Errore", JOptionPane.WARNING_MESSAGE);
+						nameField.requestFocus();
+						return;
+					} else {
+						mainFrame.editReservation(editingId, name, num, reservedTimestamp, notes);
+					}
 				}
+				dialog.dispose();
 			}
-
-			lastName = nameField.getText();
-			lastNum = numField.getText();
-			lastTime = timeField.getText();
-			lastNotes = notesField.getText();
 
 			nameField.setText("");
 			numField.setText("");
 			timeField.setText("");
 			notesField.setText("");
-			replaceBox.setSelected(false);
 			nameField.requestFocus();
 		});
 
-		// button2 settings
-		button2.setText(mainFrame == null ? "Modifica Ultimo" : "Annulla");
-		button2.setFocusable(false);
+		// cancelButton settings
+		// if we are in the server set visible
+		cancelButton.setVisible(mainFrame != null);
+		cancelButton.setFocusable(false);
 		if (mainFrame == null) {
-			button2.addActionListener(e -> {
-				if (lastName == null) {
-					JOptionPane.showMessageDialog(null, "Nessuna prenotazione modificabile.", "Errore", JOptionPane.ERROR_MESSAGE);
-					return;
-				}
-
-				nameField.setText(lastName);
-				numField.setText(lastNum);
-				timeField.setText(lastTime);
-				notesField.setText(lastNotes);
-				replaceBox.setSelected(true);
-				nameField.requestFocus();
-			});
+			// we are in the client
+			cancelButton.addActionListener(e -> exitEditMode());
 		} else {
-			button2.addActionListener(e -> dialog.dispose());
+			// we are in the server
+			cancelButton.addActionListener(e -> dialog.dispose());
 		}
+
+		// if we received a reservation in the constructor, enter edit mode
+		if (editingReservation != null)
+			editReservation(editingReservation);
 
 		if (mainFrame != null) {
 			// create new dialog
@@ -196,5 +202,33 @@ public class InputPanel {
 			dialog.setLocationRelativeTo(null);
 			dialog.setVisible(true);
 		}
+	}
+
+	public void editReservation(Reservation r) {
+		isEditMode = true;
+		editingId = r.getId();
+		sendButton.setText("Modifica");
+		cancelButton.setVisible(true);
+
+		nameField.setText(r.getName());
+		numField.setText(String.valueOf(r.getNum()));
+		if (r.getReservedTimestamp() != 0)
+			timeField.setText(r.getReservedTime());
+		else
+			timeField.setText("");
+		notesField.setText(r.getNotes());
+	}
+
+	public void exitEditMode() {
+		nameField.setText("");
+		numField.setText("");
+		timeField.setText("");
+		notesField.setText("");
+		nameField.requestFocus();
+
+		isEditMode = false;
+		editingId = -1;
+		sendButton.setText("Invia");
+		cancelButton.setVisible(false);
 	}
 }

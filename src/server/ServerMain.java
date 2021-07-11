@@ -47,12 +47,22 @@ public class ServerMain {
 				if (m.isEnd) {
 					JOptionPane.showMessageDialog(null, "Uno dei client si è disconnesso.", "Info", JOptionPane.INFORMATION_MESSAGE);
 					break;
-				} else if (m.isReservation) {
-					if (mainFrame.isNameTaken(m.name, m.replace)) {
-						writer.writeObject(Message.queueError());
+				} else if (m.isAddReservation) {
+					if (mainFrame.isNameTaken(m.name, -1)) {
+						writer.writeObject(Message.queueError(Message.QueueError.ERROR_NAME));
 					} else {
-						// res = [name,3Il num, added_time, reserved_time, notes, replace]
+						// res = [name, num, added_time, reserved_time, notes, replace]
 						mainFrame.addReservation(m.name, m.num, m.addedTimestamp, m.reservedTimestamp, m.notes, true);
+						writer.writeObject(Message.queueData(mainFrame.getQueueData()));
+						writer.reset();
+					}
+				} else if (m.isEditReservation) {
+					if (mainFrame.isIdFree(m.id)) {
+						writer.writeObject(Message.queueError(Message.QueueError.ERROR_ID));
+					} else if (mainFrame.isNameTaken(m.name, m.id)) {
+						writer.writeObject(Message.queueError(Message.QueueError.ERROR_NAME));
+					} else {
+						mainFrame.editReservation(m.id, m.name, m.num, m.reservedTimestamp, m.notes);
 						writer.writeObject(Message.queueData(mainFrame.getQueueData()));
 						writer.reset();
 					}

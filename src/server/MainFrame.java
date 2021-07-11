@@ -180,19 +180,25 @@ public class MainFrame {
 		queueTable.getColumn("Chiama").setCellRenderer(buttonRenderer);
 		queueTable.getColumn("Rimuovi").setCellRenderer(buttonRenderer);
 		// add click listener
+		MainFrame mf = this;
 		queueTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				int column = queueTable.getColumnModel().getColumnIndexAtX(e.getX()); // get the column of the button
 				int row = e.getY() / queueTable.getRowHeight(); //get the row of the button
 
-				/*Checking the row or column is valid or not*/
-				if (row < queueTable.getRowCount() && row >= 0 && column < queueTable.getColumnCount() && column >= 0) {
-					Object value = queueTable.getValueAt(row, column);
-					if (value instanceof JButton) {
-						/*perform a click event*/
-						((JButton) value).doClick();
-					}
+				// Checking the row or column is valid or not
+				if (row < 0 || row >= queueTable.getRowCount() || column < 0 || column >= queueTable.getColumnCount())
+					return;
+
+				Object value = queueTable.getValueAt(row, column);
+
+				if (e.getButton() == 1 && e.getClickCount() == 1 && value instanceof JButton) {
+					// perform a click event
+					((JButton) value).doClick();
+				} else if (e.getButton() == 1 && e.getClickCount() == 2 && !(value instanceof JButton)) {
+					Reservation r = queueModel.getData().get(row);
+					new InputPanel(mf, r, null);
 				}
 			}
 		});
@@ -234,13 +240,15 @@ public class MainFrame {
 				int column = screenTable.getColumnModel().getColumnIndexAtX(e.getX()); // get the column of the button
 				int row = e.getY() / screenTable.getRowHeight(); //get the row of the button
 
-				/*Checking the row or column is valid or not*/
-				if (row < screenTable.getRowCount() && row >= 0 && column < screenTable.getColumnCount() && column >= 0) {
-					Object value = screenTable.getValueAt(row, column);
-					if (value instanceof JButton) {
-						/*perform a click event*/
-						((JButton) value).doClick();
-					}
+				// Checking the row or column is valid or not
+				if (row < 0 || row >= screenTable.getRowCount() || column < 0 || column >= screenTable.getColumnCount())
+					return;
+
+				Object value = screenTable.getValueAt(row, column);
+
+				if (e.getButton() == 1 && e.getClickCount() == 1 && value instanceof JButton) {
+					// perform a click event
+					((JButton) value).doClick();
 				}
 			}
 		});
@@ -279,13 +287,15 @@ public class MainFrame {
 				int column = waitingTable.getColumnModel().getColumnIndexAtX(e.getX()); // get the column of the button
 				int row = e.getY() / waitingTable.getRowHeight(); //get the row of the button
 
-				/*Checking the row or column is valid or not*/
-				if (row < waitingTable.getRowCount() && row >= 0 && column < waitingTable.getColumnCount() && column >= 0) {
-					Object value = waitingTable.getValueAt(row, column);
-					if (value instanceof JButton) {
-						/*perform a click event*/
-						((JButton) value).doClick();
-					}
+				// Checking the row or column is valid or not
+				if (row < 0 || row >= waitingTable.getRowCount() || column < 0 || column >= waitingTable.getColumnCount())
+					return;
+
+				Object value = waitingTable.getValueAt(row, column);
+
+				if (e.getButton() == 1 && e.getClickCount() == 1 && value instanceof JButton) {
+					// perform a click event
+					((JButton) value).doClick();
 				}
 			}
 		});
@@ -297,9 +307,8 @@ public class MainFrame {
 		waitingScrollPane.setPreferredSize(new Dimension(waitingTable.getPreferredSize().width, waitingScrollPane.getPreferredSize().height));
 
 		// add top buttons
-		MainFrame mf = this;
 		addButton.setFocusable(false);
-		addButton.addActionListener(e -> new InputPanel(mf, null));
+		addButton.addActionListener(e -> new InputPanel(mf, null, null));
 
 		queueFilterCheckBox.setFocusable(false);
 		queueFilterCheckBox.addActionListener(e -> updateQueueData());
@@ -366,27 +375,40 @@ public class MainFrame {
 		countsLabel.setText(text);
 	}
 
-	public boolean isNameTaken(String name, boolean replace) {
-		Optional<Reservation> res = queueData.stream().filter((r) -> r.getName().equals(name)).findFirst();
-		if (res.isPresent()) {
-			if (replace) {
-				removeReservation(res.get().getId(), false);
-				return false;
-			} else {
-				return true;
-			}
-		} else {
-			// we return replace so that if replace is true and name is not present we get an error
-			return replace;
-		}
+	public boolean isNameTaken(String name, long excludeId) {
+		Optional<Reservation> res = queueData.stream().filter((r) -> r.getName().equals(name) && r.getId() != excludeId).findAny();
+		return res.isPresent();
 	}
 
+	public boolean isIdFree(long id) {
+		Optional<Reservation> res = queueData.stream().filter((r) -> r.getId() == id).findAny();
+		return !res.isPresent();
+	}
+
+	// TODO check if backup option is ever set to false
 	public void addReservation(String name, int num, long addedTimestamp, long reservedTimestamp, String notes, boolean backup) {
 		queueData.add(new Reservation(name, num, addedTimestamp, reservedTimestamp, notes, this));
 		queueData.sort(Comparator.comparingLong(Reservation::getAddedTimestamp).thenComparingLong(Reservation::getId));
 		updateQueueData();
-		if (backup) backupData();
 
+		if (backup) backupData();
+		updateTotalCounts();
+	}
+
+	public void editReservation(long id, String name, int num, long reservedTimestamp, String notes) {
+		Optional<Reservation> res = queueData.stream().filter((r) -> r.getId() == id).findAny();
+		if (!res.isPresent()) {
+			JOptionPane.showMessageDialog(null, "Questo messaggio non dovrebbe mai apparire.\nHai cercato di modificare una prenotazione inesistente.", "Errore", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		Reservation r = res.get();
+		r.setName(name);
+		r.setNum(num);
+		r.setReservedTimestamp(reservedTimestamp);
+		r.setNotes(notes);
+		updateQueueData();
+
+		backupData();
 		updateTotalCounts();
 	}
 

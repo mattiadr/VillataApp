@@ -7,6 +7,8 @@ import server.TableModel;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -24,9 +26,10 @@ public class ClientFrame {
 	public ObjectInputStream reader;
 	public ObjectOutputStream writer;
 
+	private JPanel panel;
 	private JScrollPane queueScrollPane;
 	private JScrollPane inputScrollPane;
-	private JPanel panel;
+	private final InputPanel inputPanel;
 
 	// queue table data and objects
 	private final List<Reservation> queueData = Collections.synchronizedList(new ArrayList<>());
@@ -96,6 +99,23 @@ public class ClientFrame {
 		queueTable.getColumnModel().getColumn(2).setResizable(false);
 		queueTable.getColumnModel().getColumn(3).setResizable(false);
 		queueTable.getColumnModel().getColumn(4).setResizable(false);
+		// add click listener
+		queueTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int column = queueTable.getColumnModel().getColumnIndexAtX(e.getX()); // get the column of the button
+				int row = e.getY() / queueTable.getRowHeight(); //get the row of the button
+
+				// Checking the row or column is valid or not
+				if (row < 0 || row >= queueTable.getRowCount() || column < 0 || column >= queueTable.getColumnCount())
+					return;
+
+				if (e.getButton() == 1 && e.getClickCount() == 2) {
+					Reservation r = queueModel.getData().get(row);
+					inputPanel.editReservation(r);
+				}
+			}
+		});
 
 		// queue scroll pane props
 		queueScrollPane.getViewport().add(queueTable);
@@ -104,7 +124,7 @@ public class ClientFrame {
 		queueScrollPane.setPreferredSize(new Dimension(queueTable.getPreferredSize().width, queueScrollPane.getPreferredSize().height));
 
 		// add input panel
-		InputPanel inputPanel = new InputPanel(null, this);
+		inputPanel = new InputPanel(null, null, this);
 		inputScrollPane.getViewport().add(inputPanel.panel);
 
 		// create new frame

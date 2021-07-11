@@ -9,18 +9,26 @@ public class Message implements Serializable {
 
 	// meta info
 	public boolean isEnd = false;
-	public boolean isReservation = false;
+	public boolean isAddReservation = false;
+	public boolean isEditReservation = false;
 	public boolean isDataRequest = false;
 	public boolean isQueueError = false;
 	public boolean isQueueData = false;
 
 	// reservation data
+	public long id = -1;
 	public String name = "";
 	public int num = 0;
 	public long addedTimestamp = 0;
 	public long reservedTimestamp = 0;
 	public String notes = "";
-	public boolean replace = false;
+
+	// queue error data
+	public enum QueueError {
+		ERROR_ID, ERROR_NAME
+	}
+
+	public QueueError errorType = null;
 
 	// response data
 	public List<Reservation> data;
@@ -31,15 +39,25 @@ public class Message implements Serializable {
 		return m;
 	}
 
-	public static Message reservation(String name, int num, long addedTimestamp, long reservedTimestamp, String notes, boolean replace) {
+	public static Message addReservation(String name, int num, long addedTimestamp, long reservedTimestamp, String notes) {
 		Message m = new Message();
-		m.isReservation = true;
+		m.isAddReservation = true;
 		m.name = name;
 		m.num = num;
 		m.addedTimestamp = addedTimestamp;
 		m.reservedTimestamp = reservedTimestamp;
 		m.notes = notes;
-		m.replace = replace;
+		return m;
+	}
+
+	public static Message editReservation(long id, String name, int num, long reservedTimestamp, String notes) {
+		Message m = new Message();
+		m.isEditReservation = true;
+		m.id = id;
+		m.name = name;
+		m.num = num;
+		m.reservedTimestamp = reservedTimestamp;
+		m.notes = notes;
 		return m;
 	}
 
@@ -49,9 +67,10 @@ public class Message implements Serializable {
 		return m;
 	}
 
-	public static Message queueError() {
+	public static Message queueError(QueueError errorType) {
 		Message m = new Message();
 		m.isQueueError = true;
+		m.errorType = errorType;
 		return m;
 	}
 
@@ -60,10 +79,6 @@ public class Message implements Serializable {
 		m.isQueueData = true;
 		m.data = data;
 		return m;
-	}
-
-	public String toString() {
-		return isEnd + " " + isReservation + " " + isDataRequest + " " + isQueueError + " " + isQueueData;
 	}
 
 }

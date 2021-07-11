@@ -10,11 +10,11 @@ public class Reservation implements Serializable {
 	public static long ID = 0L;
 
 	private final long id;
-	private final String name;
-	private final int num;
+	private String name;
+	private int num;
 	private final long addedTimestamp;
-	private final long reservedTimestamp;
-	private final String notes;
+	private long reservedTimestamp;
+	private String notes;
 	private final JButton call;
 	private final JButton confirm;
 	private final JButton complete;
@@ -62,8 +62,16 @@ public class Reservation implements Serializable {
 		return name;
 	}
 
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public int getNum() {
 		return num;
+	}
+
+	public void setNum(int num) {
+		this.num = num;
 	}
 
 	public long getAddedTimestamp() {
@@ -80,6 +88,10 @@ public class Reservation implements Serializable {
 		return reservedTimestamp;
 	}
 
+	public void setReservedTimestamp(long reservedTimestamp) {
+		this.reservedTimestamp = reservedTimestamp;
+	}
+
 	public String getReservedTime() {
 		if (reservedTimestamp == 0) return "ASAP";
 		Date date = new Date(reservedTimestamp);
@@ -89,6 +101,10 @@ public class Reservation implements Serializable {
 
 	public String getNotes() {
 		return notes;
+	}
+
+	public void setNotes(String notes) {
+		this.notes = notes;
 	}
 
 	public JButton getCall() {

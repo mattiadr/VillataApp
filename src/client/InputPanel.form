@@ -53,7 +53,7 @@
       </component>
       <component id="406aa" class="javax.swing.JButton" binding="sendButton">
         <constraints>
-          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag top="15" left="15" bottom="15" right="15" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -93,28 +93,6 @@
           <font name="SansSerif" size="20" style="0"/>
         </properties>
       </component>
-      <component id="3c20d" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag top="0" left="15" bottom="0" right="15" weightx="1.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <font name="SansSerif" size="20" style="0"/>
-          <text value="Sostituisci esistente"/>
-        </properties>
-      </component>
-      <component id="84d1d" class="javax.swing.JCheckBox" binding="replaceBox">
-        <constraints>
-          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-          <gridbag top="10" left="5" bottom="10" right="0" weightx="1.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <text value=""/>
-        </properties>
-        <clientProperties>
-          <hideActionText class="java.lang.Boolean" value="false"/>
-        </clientProperties>
-      </component>
       <component id="54133" class="javax.swing.JLabel">
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -136,14 +114,14 @@
           <font name="SansSerif" size="20" style="0"/>
         </properties>
       </component>
-      <component id="c8fdb" class="javax.swing.JButton" binding="button2">
+      <component id="c8fdb" class="javax.swing.JButton" binding="cancelButton">
         <constraints>
-          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag top="15" left="15" bottom="15" right="15" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
           <font name="SansSerif" size="20" style="0"/>
-          <text value="Modifica Ultimo"/>
+          <text value="Annulla"/>
         </properties>
       </component>
     </children>
