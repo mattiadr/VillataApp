@@ -35,24 +35,22 @@ public class ClientFrame {
 
 	// queue table data and objects
 	private final List<Reservation> queueData = Collections.synchronizedList(new ArrayList<>());
-	private final TableModel queueModel = new TableModel(new String[]{"Pos.", "Nome", "Posti", "Ora Ins.", "Ora Pren.", "Note", "ID"},
-			new Class<?>[]{Integer.class, String.class, Integer.class, String.class, String.class, String.class, Long.class}, queueData) {
+	private final TableModel queueModel = new TableModel(new String[]{"Nome", "Posti", "Ora Ins.", "Ora Pren.", "Note", "ID"},
+			new Class<?>[]{String.class, Integer.class, String.class, String.class, String.class, Long.class}, queueData) {
 		@Override
 		public Object getValueAt(int rowIndex, int columnIndex) {
 			switch (columnIndex) {
 				case 0:
-					return getPositionInQueue(rowIndex);
-				case 1:
 					return getData().get(rowIndex).getName();
-				case 2:
+				case 1:
 					return getData().get(rowIndex).getNum();
-				case 3:
+				case 2:
 					return getData().get(rowIndex).getAddedTime();
-				case 4:
+				case 3:
 					return getData().get(rowIndex).getReservedTime();
-				case 5:
+				case 4:
 					return getData().get(rowIndex).getNotes();
-				case 6:
+				case 5:
 					return getData().get(rowIndex).getId();
 				default:
 					return null;
@@ -60,8 +58,7 @@ public class ClientFrame {
 		}
 	};
 
-	// remaining groups and people lists
-	private ArrayList<Integer> remainingGroups = null;
+	// remaining people list
 	private ArrayList<Integer> remainingPeople = null;
 
 	public ClientFrame() {
@@ -98,17 +95,15 @@ public class ClientFrame {
 		queueTable.setRowHeight(queueTable.getRowHeight() + 6);
 		// set col width
 		queueTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-		queueTable.getColumnModel().getColumn(0).setPreferredWidth(25);
-		queueTable.getColumnModel().getColumn(1).setPreferredWidth(200);
-		queueTable.getColumnModel().getColumn(2).setPreferredWidth(25);
+		queueTable.getColumnModel().getColumn(0).setPreferredWidth(200);
+		queueTable.getColumnModel().getColumn(1).setPreferredWidth(25);
+		queueTable.getColumnModel().getColumn(2).setPreferredWidth(50);
 		queueTable.getColumnModel().getColumn(3).setPreferredWidth(50);
-		queueTable.getColumnModel().getColumn(4).setPreferredWidth(50);
-		queueTable.getColumnModel().getColumn(5).setPreferredWidth(200);
-		queueTable.getColumnModel().getColumn(0).setResizable(false);
+		queueTable.getColumnModel().getColumn(4).setPreferredWidth(200);
+		queueTable.getColumnModel().getColumn(1).setResizable(false);
 		queueTable.getColumnModel().getColumn(2).setResizable(false);
 		queueTable.getColumnModel().getColumn(3).setResizable(false);
 		queueTable.getColumnModel().getColumn(4).setResizable(false);
-		queueTable.getColumnModel().getColumn(5).setResizable(false);
 		// add click listener
 		queueTable.addMouseListener(new MouseAdapter() {
 			@Override
@@ -171,54 +166,14 @@ public class ClientFrame {
 		String text = "Prenotazioni: " + queueData.size() + ". Totale persone: " + tot + ".";
 		countsLabel.setText(text);
 
-		remainingGroups = null;
 		remainingPeople = null;
 	}
 
-	private enum Size {
-		S_1_2,
-		S_3_4,
-		S_5_6,
-		S_7_10,
-		S_BIG
-	}
-
 	private void buildRemaining() {
-		remainingGroups = new ArrayList<>();
 		remainingPeople = new ArrayList<>();
-
-		// TODO
-//		HashMap<Integer, Integer> numberOfGroups = new HashMap<>();
-//
-//		queueData.forEach(r -> {
-//			switch (r.getNum()) {
-//				case 1:
-//				case 2:
-//					numberOfGroups.put(2, numberOfGroups.getOrDefault(2, 0));
-//				case 3:
-//				case 4:
-//					numberOfGroups.put(4, numberOfGroups.getOrDefault(4, 0));
-//				case 5:
-//				case 6:
-//					numberOfGroups.put(4, numberOfGroups.getOrDefault(4, 0));
-//				case 7:
-//				case 8:
-//				case 9:
-//				case 10:
-//					numberOfGroups.put(10, numberOfGroups.getOrDefault(10, 0));
-//				default:
-//					numberOfGroups.put(11, numberOfGroups.getOrDefault(11, 0));
-//			}
-//
-//		});
 
 		remainingPeople.add(0);
 		queueData.forEach(r -> remainingPeople.add(remainingPeople.get(remainingPeople.size() - 1) + r.getNum()));
-	}
-
-	public int getPositionInQueue(int row) {
-		// TODO
-		return 0;
 	}
 
 	public void setRemainingLabel(int row) {
