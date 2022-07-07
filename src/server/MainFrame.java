@@ -371,7 +371,7 @@ public class MainFrame {
 
 	private void updateTotalCounts() {
 		int tot = queueData.stream().mapToInt(Reservation::getNum).sum();
-		String text = "Prenotazioni: " + queueData.size() + ". Totale persone: " + tot;
+		String text = "Prenotazioni: " + queueData.size() + ". Totale persone: " + tot + ".";
 		countsLabel.setText(text);
 	}
 
