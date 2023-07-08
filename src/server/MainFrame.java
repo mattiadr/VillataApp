@@ -17,6 +17,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Timer;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class MainFrame {
@@ -468,8 +469,10 @@ public class MainFrame {
 	}
 
 	public boolean showBackupFailure = true;
+	public static ReentrantLock mutex = new ReentrantLock();
 
 	public void backupData() {
+		mutex.lock();
 		try {
 			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(BACKUP_LOCATION));
 			oos.writeObject(queueData);
@@ -480,6 +483,7 @@ public class MainFrame {
 				new Thread(() -> JOptionPane.showMessageDialog(null, "Impossibile effettuare backup.\nQuesto messaggio non verrà più mostrato", "Errore", JOptionPane.ERROR_MESSAGE)).start();
 			}
 		}
+		mutex.unlock();
 	}
 
 	public void loadData() {
