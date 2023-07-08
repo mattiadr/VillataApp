@@ -30,6 +30,8 @@ public class ClientFrame {
 	private JScrollPane queueScrollPane;
 	private JScrollPane inputScrollPane;
 	private final InputPanel inputPanel;
+	private JLabel countsLabel;
+	private JLabel remainingLabel;
 
 	// queue table data and objects
 	private final List<Reservation> queueData = Collections.synchronizedList(new ArrayList<>());
@@ -55,6 +57,9 @@ public class ClientFrame {
 			}
 		}
 	};
+
+	// remaining people list
+	private ArrayList<Integer> remainingPeople = null;
 
 	public ClientFrame() {
 		// get ip
@@ -110,6 +115,12 @@ public class ClientFrame {
 				if (row < 0 || row >= queueTable.getRowCount() || column < 0 || column >= queueTable.getColumnCount())
 					return;
 
+				// single click
+				if (e.getButton() == 1 && e.getClickCount() == 1) {
+					setRemainingLabel(queueTable.getSelectedRow());
+				}
+
+				// double click
 				if (e.getButton() == 1 && e.getClickCount() == 2) {
 					Reservation r = queueModel.getData().get(row);
 					inputPanel.editReservation(r);
@@ -151,6 +162,26 @@ public class ClientFrame {
 		queueData.clear();
 		queueData.addAll(data);
 		queueModel.refresh();
+		int tot = queueData.stream().mapToInt(Reservation::getNum).sum();
+		String text = "Prenotazioni: " + queueData.size() + ". Totale persone: " + tot + ".";
+		countsLabel.setText(text);
+
+		remainingPeople = null;
+	}
+
+	private void buildRemaining() {
+		remainingPeople = new ArrayList<>();
+
+		remainingPeople.add(0);
+		queueData.forEach(r -> remainingPeople.add(remainingPeople.get(remainingPeople.size() - 1) + r.getNum()));
+	}
+
+	public void setRemainingLabel(int row) {
+		if (remainingPeople == null)
+			buildRemaining();
+		int remaining = remainingPeople.get(row);
+		String text = "Persone precedenti: " + remaining + ".";
+		remainingLabel.setText(text);
 	}
 
 	public static ReentrantLock mutex = new ReentrantLock();
